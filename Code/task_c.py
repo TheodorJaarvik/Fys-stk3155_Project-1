@@ -47,7 +47,7 @@ X_test_scaled = scaler.transform(X_test)
 from sklearn import linear_model
 from sklearn.metrics import mean_squared_error, r2_score
 
-reg = linear_model.Lasso(alpha=0.1)
+reg = linear_model.Lasso(max_iter=1000000, alpha=0.1)
 reg.fit(X_train_scaled, z_train)
 
 regRidge = linear_model.Ridge(alpha=0.1)
@@ -97,3 +97,31 @@ print("train_MSE:", train_MSE_ols)
 print("test_MSE:", test_MSE_ols)
 print("r2_train:", r2_train_ols)
 print("r2_test:", r2_test_ols)
+
+#Find optimal alpha(lambda) : This can also be done by cross-validation but im just using the same code as a) and b)
+
+lambdas = [0.0001, 0.001, 0.01, 0.1, 1, 10, 100]
+
+mse_train_lasso = []
+mse_test_lasso = []
+r2_train_lasso = []
+r2_test_lasso = []
+
+for lmd in lambdas:
+
+    reg2 = linear_model.Lasso(max_iter=1000000, alpha=lmd)
+    reg2.fit(X_train_scaled, z_train)
+
+    z_train_pred2 = reg2.predict(X_train_scaled)
+    z_test_pred2 = reg2.predict(X_test_scaled)
+
+    mse_train_lasso.append(mean_squared_error(z_train, z_train_pred2))
+    mse_test_lasso.append(mean_squared_error(z_test, z_test_pred))
+    r2_train_lasso.append(r2_score(z_train, z_train_pred2))
+    r2_test_lasso.append(r2_score(z_test, z_test_pred2))
+
+    print(f"Lambda: {lmd}")
+    print(f"  Training MSE: {mse_train_lasso[-1]}")
+    print(f"  Test MSE: {mse_test_lasso[-1]}")
+    print(f"  Training R²: {r2_train_lasso[-1]}")
+    print(f"  Test R²: {r2_test_lasso[-1]}")
