@@ -1,9 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.model_selection import cross_val_score, KFold
-from sklearn.preprocessing import StandardScaler
-from sklearn import linear_model
-from sklearn.metrics import make_scorer, mean_squared_error
 
 
 # Franke function definition
@@ -33,41 +28,72 @@ def create_polynomial_design_matrix(x, y, degree):
 
 # Create design matrix for polynomial degree 5
 degree = 5
+
 X = create_polynomial_design_matrix(x, y, degree)
 
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.3, random_state=42)
+
+
+from sklearn.preprocessing import StandardScaler
+
+
 scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
 
-i = 5
 
-for i in range(5,11):
+from sklearn import linear_model
+from sklearn.metrics import mean_squared_error, r2_score
 
-    kf = KFold(n_splits=i, shuffle=True, random_state=42)
-    mse_scorer = make_scorer(mean_squared_error, greater_is_better=False)
+reg = linear_model.Lasso(alpha=0.1)
+reg.fit(X_train_scaled, z_train)
 
-    regLasso = linear_model.Lasso(alpha=0.1)
-    regRidge = linear_model.Ridge(alpha=0.1)
-    regOLS = linear_model.LinearRegression()
+regRidge = linear_model.Ridge(alpha=0.1)
+regRidge.fit(X_train_scaled, z_train)
 
-    lassoScore = cross_val_score(regLasso, X_scaled, z, cv=kf, scoring=mse_scorer)
-    ridgeScore = cross_val_score(regRidge, X_scaled, z, cv=kf, scoring=mse_scorer)
-    olsScore = cross_val_score(regOLS, X_scaled, z, cv=kf, scoring=mse_scorer)
+regOLS = linear_model.LinearRegression()
+regOLS.fit(X_train_scaled, z_train)
 
-    lassoMSE = -np.mean(lassoScore)
-    ridgeMSE = -np.mean(ridgeScore)
-    olsMSE = -np.mean(olsScore)
+z_train_pred = reg.predict(X_train_scaled)
+z_train_pred_ridge = regRidge.predict(X_train_scaled)
+z_train_pred_ols = regOLS.predict(X_train_scaled)
 
-    models = ['Lasso', 'Ridge', 'OLS']
-    mse_values = [lassoMSE, ridgeMSE, olsMSE]
+z_test_pred= reg.predict(X_test_scaled)
+z_test_pred_ridge= regRidge.predict(X_test_scaled)
+z_test_pred_ols= regOLS.predict(X_test_scaled)
 
-    plt.figure(figsize=(8, 5))
-    plt.bar(models, mse_values, color=['blue', 'orange', 'green'])
-    plt.ylabel('Mean Squared Error')
-    plt.title(f'Cross-validated MSE for Lasso, Ridge, and OLS Regression with {i} folds')
-    plt.show()
+train_MSE = mean_squared_error(z_train, z_train_pred)
+train_MSE_ridge = mean_squared_error(z_train, z_train_pred_ridge)
+train_MSE_ols = mean_squared_error(z_train, z_train_pred_ols)
 
-    print(f"{i} folds Lasso MSE: ", lassoMSE)
-    print(f"{i} folds Rigde MSE: ", ridgeMSE)
-    print(f"{i} folds OLS MSE: ", olsMSE)
+test_MSE = mean_squared_error(z_test, z_test_pred)
+test_MSE_ridge = mean_squared_error(z_test, z_test_pred_ridge)
+test_MSE_ols = mean_squared_error(z_test, z_test_pred_ols)
 
-    i = i + 1
+r2_train = r2_score(z_train, z_train_pred)
+r2_train_ridge = r2_score(z_train, z_train_pred_ridge)
+r2_train_ols = r2_score(z_train, z_train_pred_ols)
+
+r2_test = r2_score(z_test, z_test_pred)
+r2_test_ridge = r2_score(z_test, z_test_pred_ridge)
+r2_test_ols = r2_score(z_test, z_test_pred_ols)
+
+print("MSE and R2-score using Lasso regression:")
+print("train_MSE:", train_MSE)
+print("test_MSE:", test_MSE)
+print("r2_train:", r2_train)
+print("r2_test:", r2_test)
+
+print("MSE and R2-score using Ridge regression:")
+print("train_MSE:", train_MSE_ridge)
+print("test_MSE:", test_MSE_ridge)
+print("r2_train:", r2_train_ridge)
+print("r2_test:", r2_test_ridge)
+
+print("MSE and R2-score using OLS regression:")
+print("train_MSE:", train_MSE_ols)
+print("test_MSE:", test_MSE_ols)
+print("r2_train:", r2_train_ols)
+print("r2_test:", r2_test_ols)
