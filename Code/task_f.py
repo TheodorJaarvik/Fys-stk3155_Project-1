@@ -38,8 +38,6 @@ X = create_polynomial_design_matrix(x, y, degree)
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
-i = 5
-
 for i in range(5,11):
 
     kf = KFold(n_splits=i, shuffle=True, random_state=42)
