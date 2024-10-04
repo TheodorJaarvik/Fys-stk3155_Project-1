@@ -38,6 +38,10 @@ X = create_polynomial_design_matrix(x, y, degree)
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
+lasso_mse_list = []
+ridge_mse_list = []
+ols_mse_list = []
+
 for i in range(5,11):
 
     kf = KFold(n_splits=i, shuffle=True, random_state=42)
@@ -55,17 +59,27 @@ for i in range(5,11):
     ridgeMSE = -np.mean(ridgeScore)
     olsMSE = -np.mean(olsScore)
 
-    models = ['Lasso', 'Ridge', 'OLS']
-    mse_values = [lassoMSE, ridgeMSE, olsMSE]
-
-    plt.figure(figsize=(8, 5))
-    plt.bar(models, mse_values, color=['blue', 'orange', 'green'])
-    plt.ylabel('Mean Squared Error')
-    plt.title(f'Cross-validated MSE for Lasso, Ridge, and OLS Regression with {i} folds')
-    plt.show()
+    lasso_mse_list.append(lassoMSE)
+    ridge_mse_list.append(ridgeMSE)
+    ols_mse_list.append(olsMSE)
 
     print(f"{i} folds Lasso MSE: ", lassoMSE)
     print(f"{i} folds Rigde MSE: ", ridgeMSE)
     print(f"{i} folds OLS MSE: ", olsMSE)
 
     i = i + 1
+
+
+k_values = list(range(5, 11))
+plt.figure(figsize=(10, 6))
+plt.plot(k_values, lasso_mse_list, marker='o', label='Lasso', color='blue')
+plt.plot(k_values, ridge_mse_list, marker='o', label='Ridge', color='orange')
+plt.plot(k_values, ols_mse_list, marker='o', label='OLS', color='green')
+
+plt.xticks(k_values)
+plt.xlabel('Number of Folds (k)')
+plt.ylabel('Mean Squared Error')
+plt.title('Cross-Validated MSE for Lasso, Ridge, and OLS Regression')
+plt.legend()
+plt.grid()
+plt.show()
